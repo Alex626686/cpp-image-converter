@@ -50,16 +50,15 @@ PACKED_STRUCT_END
 
 // напишите эту функцию
 bool SaveBMP(const Path& file, const Image& image) {
-    const int stride = GetBMPStride(image.GetWidth());
-    vector<char> buff(stride);
     ofstream out(file, ios::binary);
+    const int stride = GetBMPStride(image.GetWidth());
 
     BitmapFileHeader file_header{ stride, image.GetHeight() };
     out.write(reinterpret_cast<const char*>(&file_header), sizeof(file_header));
-
     BitmapInfoHeader info_header{ stride, image.GetWidth(), image.GetHeight() };
     out.write(reinterpret_cast<const char*>(&info_header), sizeof(info_header));
 
+    vector<char> buff(stride);
     for (int y = image.GetHeight() - 1; y >= 0; --y) {
         const Color* line = image.GetLine(y);
         for (int x = 0; x < image.GetWidth(); ++x) {
