@@ -81,10 +81,14 @@ bool SaveBMP(const Path& file, const Image& image) {
 // напишите эту функцию
 Image LoadBMP(const Path& file) {
     ifstream ifs(file, ios::binary);
-    assert(ifs);
+    if (!ifs) {
+        return Image;
+    }
     BitmapFileHeader bfh;
     ifs.read(reinterpret_cast<char*>(&bfh), sizeof(BitmapFileHeader));
-    assert(bfh.signature == char[2]({'B', 'M'}));
+    if (!bfh.signature == char[2]({ 'B', 'M' })) {
+        return Image;
+    }
 
     BitmapInfoHeader bih;
     ifs.read(reinterpret_cast<char*>(&bih), sizeof(BitmapInfoHeader));
