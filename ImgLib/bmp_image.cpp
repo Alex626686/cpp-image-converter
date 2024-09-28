@@ -1,8 +1,9 @@
 #include "bmp_image.h"
 #include "pack_defines.h"
 
-#include <iostream>
 #include <array>
+#include <cassert>
+#include <iostream>
 #include <fstream>
 #include <string_view>
 
@@ -17,7 +18,8 @@ namespace img_lib {
     }
 
 
-PACKED_STRUCT_BEGIN BitmapInfoHeader {
+PACKED_STRUCT_BEGIN BitmapInfoHeader{
+    BitmapInfoHeader() = default;
     BitmapInfoHeader(int stride, int width, int height)
         : width_(width), height_(height) {
         bytes_in_data = stride * height;
@@ -38,6 +40,7 @@ PACKED_STRUCT_END
 
 
 PACKED_STRUCT_BEGIN BitmapFileHeader{
+    BitmapFileHeader() = default;
     BitmapFileHeader(int stride, int height) {
         sum_size = sizeof(BitmapFileHeader) + sizeof(BitmapInfoHeader) + stride * height;
     }
@@ -73,20 +76,26 @@ bool SaveBMP(const Path& file, const Image& image) {
 
 }
 
+//bool HeaderCheck()
+
 // напишите эту функцию
 Image LoadBMP(const Path& file) {
     ifstream ifs(file, ios::binary);
-    ifs.ignore(18);
-    int width;
-    int height;
-    ifs.read(reinterpret_cast<char*>(&width), sizeof(width));
-    ifs.read(reinterpret_cast<char*>(&height), sizeof(height));
+    assert(ifs);
+    BitmapFileHeader bfh;
+    ifs.read(reinterpret_cast<char*>(&bfh), sizeof(BitmapFileHeader));
+    assert(bfh.signature == char[2]({'B', 'M'}));
+
+    BitmapInfoHeader bih;
+    ifs.read(reinterpret_cast<char*>(&bih), sizeof(BitmapInfoHeader));
+
+    int width = bih.width_;
+    int height = bih.height_;
 
     int stride = GetBMPStride(width);
     Image result(stride / 3, height, Color::Black());
     std::vector<char> buff(width * 3);
 
-    ifs.ignore(28);
     for (int y = result.GetHeight() - 1; y >= 0; --y) {
         Color* line = result.GetLine(y);
         ifs.read(buff.data(), stride);
